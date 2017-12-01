@@ -1,7 +1,7 @@
 /*************************************************************************
 	> File Name: input_logger.c
-	> Author: 
-	> Mail: 
+	> Author: Dracula
+	> Mail: dracula.guanyu.li@gmail.com
 	> Created Time: Thursday, November 30, 2017 PM12:04:08 HKT
  ************************************************************************/
 

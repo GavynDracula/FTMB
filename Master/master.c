@@ -1,7 +1,7 @@
 /*************************************************************************
 	> File Name: master.c
-	> Author: 
-	> Mail: 
+	> Author: Dracula
+	> Mail: dracula.guanyu.li@gmail.com
 	> Created Time: Friday, December 01, 2017 PM04:02:43 HKT
  ************************************************************************/
 
