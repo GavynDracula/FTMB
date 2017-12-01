@@ -29,7 +29,7 @@ void get_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* pac
 
 int main() {
     char* nic_str = "eno4";
-    char* filename = "/home/dracula/ftmb/stable_storage/packets.record";
+    char* filename = "/home/dracula/ftmb/stable_storage/packets.pcap";
     int pkt_max = 65535;
     int pkt_num = 6;
     int promisc = 0;
