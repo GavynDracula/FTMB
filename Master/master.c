@@ -7,14 +7,14 @@
 
 #include "master.h"
 
-int main() {
+int main(void) {
     int master_sockfd;
     int il_sockfd;
     struct sockaddr_in master_addr;
     struct sockaddr_in il_addr;
     socklen_t len = sizeof(il_addr);
 
-    char command;
+    char data;
 
     // Creat a socket
     master_sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -32,7 +32,13 @@ int main() {
     fprintf(stdout, "Receive connection request from InputLogger\n");
 
     while (1) {
-        read(il_sockfd, &command, 1);
+        read(il_sockfd, &data, 1);
+        if (data == 's') {
+            fprintf(stdout, "Receive the request of snapshot from InputLogger\n");
+            data = 't';
+            write(il_sockfd, &data, 1);
+            fprintf(stdout, "Taken snapshot and send the reply to InputLogger\n");
+        }
     }
 
     close(il_sockfd);
