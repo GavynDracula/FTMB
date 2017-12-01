@@ -7,8 +7,12 @@
 
 #include "input_logger.h"
 
+int replay_trigger = 0;
+
 int main() {
     char err_buf[PCAP_ERRBUF_SIZE];
+    int received_num;
+    char data;
 
     int il_sockfd;
     struct sockaddr_in il_addr;
@@ -25,6 +29,7 @@ int main() {
     il_addr.sin_addr.s_addr = inet_addr(MASTER_IP);
     il_addr.sin_port = htons(MASTER_IL_PORT);
 
+    // Connect to Master
     if (connect(il_sockfd, (struct sockaddr *)&il_addr, sizeof(il_addr)) == -1) {
         fprintf(stderr, "Error: connect(): can't connect to master\n");
         exit(1);
@@ -39,8 +44,8 @@ int main() {
         exit(2);
     }
     else
-        fprintf(stdout, 
-                "Open src_nic %s and dst_nic %s successfully!\n", 
+        fprintf(stdout,
+                "Open src_nic %s and dst_nic %s successfully!\n",
                 SRC_NIC, DST_NIC);
 
     /*
@@ -54,18 +59,36 @@ int main() {
      *}
      */
     
-    if((pd = pcap_dump_open(src_nic, IN_PACKETS)) == NULL) {
-        fprintf(stderr, "Error: pcap_dump_open(): open file %s failed\n", IN_PACKETS);
-        exit(5);
-    }
-    else
-        fprintf(stdout, "Connect to stable storage successfully!\n");
-
     arg.dst_nic = dst_nic;
-    arg.pd = pd;
-    pcap_loop(src_nic, PACKET_NUM, get_packet, (u_char*)&arg);
 
-    pcap_dump_close(pd);
+    while (!replay_trigger) {
+        if((pd = pcap_dump_open(src_nic, TMP_PACKETS)) == NULL) {
+            fprintf(stderr, "Error: pcap_dump_open(): open file %s failed\n", IN_PACKETS);
+            exit(5);
+        }
+        else
+            fprintf(stdout, "Connect to stable storage(pcap now) successfully!\n");
+        arg.pd = pd;
+        
+        received_num = pcap_dispatch(src_nic, PACKET_NUM, get_packet, (u_char*)&arg);
+        pcap_dump_close(pd);
+
+        fprintf(stdout, "Receive %d packets\n", received_num);
+        
+        if (received_num > 0) {
+            data = 's'; // Tell Master to take a 's'napshot
+            write(il_sockfd, &data, 1);
+            fprintf(stdout, "Send the request of snapshot to Master\n");
+            read(il_sockfd, &data, 1);
+            fprintf(stdout, "Receive the reply from Master\n");
+            if (data == 't') {
+                // Master's snapshot is 't'aken
+                fprintf(stdout, "Master's snapshot is taken\n");
+                rename(TMP_PACKETS, IN_PACKETS);
+            }
+        }
+    }
+
     pcap_close(src_nic);
     pcap_close(dst_nic);
 
@@ -76,19 +99,21 @@ void get_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* pac
     pcap_dumper_t *pd = ((struct pcap_loop_arg *)arg)->pd;
     pcap_t *dst_nic = ((struct pcap_loop_arg *)arg)->dst_nic;
 
+    // Log the packet
     pcap_dump((u_char *)pd, pkthdr, packet);
 
+    // Send the packet to Master
     if (pcap_sendpacket(dst_nic, packet, pkthdr->caplen) != 0) {
         fprintf(stderr, "pcap_sendpacket(): send packet error\n");
     }
 
-    print_packet(pkthdr, packet);
+    /*print_packet(pkthdr, packet);*/
 }
 
 void print_packet(const struct pcap_pkthdr* pkthdr, const u_char* packet) {
     printf("Packet length: %d\n", pkthdr->len);
     printf("Number of bytes: %d\n", pkthdr->caplen);
-    printf("Recieved time: %s\n", ctime((const time_t*)&pkthdr->ts.tv_sec));
+    printf("Received time: %s\n", ctime((const time_t*)&pkthdr->ts.tv_sec));
 
     for (int i = 0; i < pkthdr->len; i++) {
         printf(" %02x", packet[i]);
@@ -98,4 +123,44 @@ void print_packet(const struct pcap_pkthdr* pkthdr, const u_char* packet) {
     }
 
     printf("\n\n");
+}
+
+void replay_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
+    pcap_t *bac_nic = (pcap_t *)arg;
+
+    // Send the packet to Backup
+    if (pcap_sendpacket(bac_nic, packet, pkthdr->caplen) != 0) {
+        fprintf(stderr, "pcap_sendpacket(): send packet error\n");
+    }
+}
+
+void replay(void) {
+    char err_buf[PCAP_ERRBUF_SIZE];
+    pcap_t *bac_nic;
+    pcap_t *in_packets;
+
+    // Open Backup NIC to send packets to Backup
+    bac_nic = pcap_open_live(BAC_NIC, PACKET_MAX_SIZE, PROMISC_TRIGGER, TO_MS, err_buf);
+    // Open logged in_packets for replay
+    in_packets = pcap_open_offline(IN_PACKETS, err_buf);
+
+    if (bac_nic == NULL)  {
+        fprintf(stderr, "Error: pcap_open_live(): %s\n", err_buf);
+        exit(6);
+    }
+    else
+        fprintf(stdout, "Open bac_nic %s successfully!\n", BAC_NIC);
+
+    if (in_packets == NULL) {
+        fprintf(stderr, "Error: pcap_open_offline(): %s\n", err_buf);
+        exit(7);
+    }
+    else
+        fprintf(stdout, "Open in_packets %s successfully!\n", IN_PACKETS);
+
+    // Replay packets to Backup
+    pcap_loop(in_packets, -1, replay_packet, (u_char*)bac_nic);
+
+    pcap_close(in_packets);
+    pcap_close(bac_nic);
 }
