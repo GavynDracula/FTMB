@@ -21,6 +21,9 @@
 #define MASTER_IP "192.168.1.2"
 #define MASTER_IL_PORT 8081
 
+#define BACKUP_IP "192.168.1.3"
+#define BACKUP_IL_PORT 8082
+
 #define BAC_NIC "eno3"
 #define SRC_NIC "eno4"
 #define DST_NIC "eno3"
@@ -39,7 +42,7 @@ struct pcap_loop_arg {
 
 void get_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* packet);
 void print_packet(const struct pcap_pkthdr* pkthdr, const u_char* packet);
-void replay();
+void replay(char *packets);
 void replay_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* packet);
 
 #endif

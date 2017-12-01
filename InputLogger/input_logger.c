@@ -12,6 +12,7 @@ int replay_trigger = 0;
 int main() {
     char err_buf[PCAP_ERRBUF_SIZE];
     int received_num;
+    int connect_status;
     char data;
 
     int il_sockfd;
@@ -77,9 +78,47 @@ int main() {
         
         if (received_num > 0) {
             data = 's'; // Tell Master to take a 's'napshot
-            write(il_sockfd, &data, 1);
+            connect_status = write(il_sockfd, &data, 1);
             fprintf(stdout, "Send the request of snapshot to Master\n");
-            read(il_sockfd, &data, 1);
+            connect_status = read(il_sockfd, &data, 1);
+            
+            // Follow if-case is just incomplete, not tested
+            if (connect_status <= 0) {
+                fprintf(stderr, "Master is disconnected, now start to recovery\n");
+                // Create a socket
+                il_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+                il_addr.sin_family = AF_INET;
+                il_addr.sin_addr.s_addr = inet_addr(BACKUP_IP);
+                il_addr.sin_port = htons(BACKUP_IL_PORT);
+                
+                // Connect to Backup
+                if (connect(il_sockfd,(struct sockaddr *)&il_addr,sizeof(il_addr)) == -1) {
+                    fprintf(stderr, "Error: connect(): can't connect to Backup\n");
+                    exit(1);
+                }
+                // Start to replay 
+                replay(IN_PACKETS);
+                replay(TMP_PACKETS);
+                
+                data = 's'; // Tell Backup to take a 's'napshot
+                connect_status = write(il_sockfd, &data, 1);
+                fprintf(stdout, "Send the request of snapshot to Backup\n");
+                connect_status = read(il_sockfd, &data, 1);
+                fprintf(stdout, "Receive the reply from Backup\n");
+                if (data == 't') {
+                    // Backup's snapshot is 't'aken
+                    fprintf(stdout, "Backup's snapshot is taken\n");
+                    rename(TMP_PACKETS, IN_PACKETS);
+                }
+                dst_nic = pcap_open_live(BAC_NIC, PACKET_MAX_SIZE, 
+                                         PROMISC_TRIGGER, TO_MS, err_buf);
+                if (dst_nic == NULL) {
+                    fprintf(stderr, "Error: pcap_open_live(): %s\n", err_buf);
+                    exit(2);
+                }
+                continue;
+            }
+            
             fprintf(stdout, "Receive the reply from Master\n");
             if (data == 't') {
                 // Master's snapshot is 't'aken
@@ -134,7 +173,7 @@ void replay_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* 
     }
 }
 
-void replay(void) {
+void replay(char *packets) {
     char err_buf[PCAP_ERRBUF_SIZE];
     pcap_t *bac_nic;
     pcap_t *in_packets;
@@ -142,7 +181,7 @@ void replay(void) {
     // Open Backup NIC to send packets to Backup
     bac_nic = pcap_open_live(BAC_NIC, PACKET_MAX_SIZE, PROMISC_TRIGGER, TO_MS, err_buf);
     // Open logged in_packets for replay
-    in_packets = pcap_open_offline(IN_PACKETS, err_buf);
+    in_packets = pcap_open_offline(packets, err_buf);
 
     if (bac_nic == NULL)  {
         fprintf(stderr, "Error: pcap_open_live(): %s\n", err_buf);
@@ -156,7 +195,7 @@ void replay(void) {
         exit(7);
     }
     else
-        fprintf(stdout, "Open in_packets %s successfully!\n", IN_PACKETS);
+        fprintf(stdout, "Open in_packets %s successfully!\n", packets);
 
     // Replay packets to Backup
     pcap_loop(in_packets, -1, replay_packet, (u_char*)bac_nic);
