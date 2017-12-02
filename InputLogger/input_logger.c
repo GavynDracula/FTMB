@@ -19,9 +19,9 @@ int main() {
     struct sockaddr_in il_addr;
 
     /*struct bpf_program filter;*/
-    pcap_t *src_nic;
-    pcap_t *dst_nic;
-    pcap_dumper_t *pd;
+    pcap_t* src_nic;
+    pcap_t* dst_nic;
+    pcap_dumper_t* pd;
     struct pcap_loop_arg arg;
 
     // Create a socket
@@ -31,7 +31,7 @@ int main() {
     il_addr.sin_port = htons(MASTER_IL_PORT);
 
     // Connect to Master
-    if (connect(il_sockfd, (struct sockaddr *)&il_addr, sizeof(il_addr)) == -1) {
+    if (connect(il_sockfd, (struct sockaddr*)&il_addr, sizeof(il_addr)) == -1) {
         fprintf(stderr, "Error: connect(): can't connect to master\n");
         exit(1);
     }
@@ -92,7 +92,7 @@ int main() {
                 il_addr.sin_port = htons(BACKUP_IL_PORT);
                 
                 // Connect to Backup
-                if (connect(il_sockfd,(struct sockaddr *)&il_addr,sizeof(il_addr)) == -1) {
+                if (connect(il_sockfd,(struct sockaddr*)&il_addr,sizeof(il_addr)) == -1) {
                     fprintf(stderr, "Error: connect(): can't connect to Backup\n");
                     exit(1);
                 }
@@ -135,8 +135,8 @@ int main() {
 }
 
 void get_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
-    pcap_dumper_t *pd = ((struct pcap_loop_arg *)arg)->pd;
-    pcap_t *dst_nic = ((struct pcap_loop_arg *)arg)->dst_nic;
+    pcap_dumper_t* pd = ((struct pcap_loop_arg*)arg)->pd;
+    pcap_t* dst_nic = ((struct pcap_loop_arg*)arg)->dst_nic;
 
     // Log the packet
     pcap_dump((u_char *)pd, pkthdr, packet);
@@ -165,7 +165,7 @@ void print_packet(const struct pcap_pkthdr* pkthdr, const u_char* packet) {
 }
 
 void replay_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
-    pcap_t *bac_nic = (pcap_t *)arg;
+    pcap_t* bac_nic = (pcap_t*)arg;
 
     // Send the packet to Backup
     if (pcap_sendpacket(bac_nic, packet, pkthdr->caplen) != 0) {
@@ -173,10 +173,10 @@ void replay_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* 
     }
 }
 
-void replay(char *packets) {
+void replay(char* packets) {
     char err_buf[PCAP_ERRBUF_SIZE];
-    pcap_t *bac_nic;
-    pcap_t *in_packets;
+    pcap_t* bac_nic;
+    pcap_t* in_packets;
 
     // Open Backup NIC to send packets to Backup
     bac_nic = pcap_open_live(BAC_NIC, PACKET_MAX_SIZE, PROMISC_TRIGGER, TO_MS, err_buf);

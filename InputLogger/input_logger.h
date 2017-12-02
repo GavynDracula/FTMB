@@ -38,13 +38,13 @@
 #define TO_MS 5000
 
 struct pcap_loop_arg {
-    pcap_t *dst_nic;
-    pcap_dumper_t *pd;
+    pcap_t* dst_nic;
+    pcap_dumper_t* pd;
 };
 
 void get_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* packet);
 void print_packet(const struct pcap_pkthdr* pkthdr, const u_char* packet);
-void replay(char *packets);
+void replay(char* packets);
 void replay_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* packet);
 
 #endif
