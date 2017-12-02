@@ -25,12 +25,14 @@
 #define BACKUP_IL_PORT 8082
 
 #define BAC_NIC "eno3"
+// Source NIC should be set as promisc as follow
+// $ sudo ifconfig eno4 promisc
 #define SRC_NIC "eno4"
 #define DST_NIC "eno3"
 #define IN_PACKETS "/home/dracula/FTMB/StableStorage/in_packets.pcap"
 #define TMP_PACKETS "/home/dracula/FTMB/StableStorage/tmp.pcap"
 #define PACKET_MAX_SIZE 65535
-#define PACKET_NUM 6
+#define PACKET_NUM -1
 #define PROMISC_TRIGGER 0
 #define OPTIMIZE_TRIGGER  1
 #define TO_MS 5000
