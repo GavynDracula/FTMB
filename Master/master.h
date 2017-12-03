@@ -15,6 +15,8 @@
 #include<arpa/inet.h>
 #include<unistd.h>
 
+#include "packet_counter.h"
+
 #define MASTER_IP "192.168.1.2"
 #define MASTER_IL_PORT 8081
 
