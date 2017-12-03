@@ -16,6 +16,20 @@ int main(void) {
 
     char data;
 
+    // Start Network Function Threand(Here a simple packet counter)
+    pthread_t nf_thread;
+    packet_counter_arg pc_arg;
+    pthread_mutex_t mutex;
+    int counter;
+
+    pc_arg.mutex = &mutex;
+    pc_arg.counter = &counter;
+    pthread_mutex_init(pc_arg.mutex, NULL);
+    if (pthread_create(&nf_thread, NULL, &packet_counter, (void*)&pc_arg) != 0) {
+        fprintf(stderr, "Error: FTMB-Master: can't create "
+                "network function(packet counter) thread!");
+    }
+
     // Creat a socket
     master_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     master_addr.sin_family = AF_INET;
@@ -36,6 +50,9 @@ int main(void) {
         if (data == 's') {
             fprintf(stdout, "FTMB-Master: Receive the "
                     "request of snapshot from InputLogger\n");
+            pthread_mutex_lock(pc_arg.mutex);
+            fprintf(stdout, "FTMB-Master: the snapshot state(counter) is %d\n", *(pc_arg.counter));
+            pthread_mutex_unlock(pc_arg.mutex);
             data = 't';
             write(il_sockfd, &data, 1);
             fprintf(stdout, "TFTMB-Master: aken snapshot "
