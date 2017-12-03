@@ -26,18 +26,20 @@ int main(void) {
     bind(master_sockfd, (struct sockaddr *)&master_addr, sizeof(master_addr));
     // Listen
     listen(master_sockfd, 1);
-    fprintf(stdout, "Master is waiting for InputLogger to connect...\n");
+    fprintf(stdout, "FTMB-Master: Master is waiting for InputLogger to connect...\n");
     // Accept a connection
     il_sockfd = accept(master_sockfd, (struct sockaddr *)&il_addr, &len);
-    fprintf(stdout, "Receive connection request from InputLogger\n");
+    fprintf(stdout, "FTMB-Master: Receive connection request from InputLogger\n");
 
     while (1) {
         read(il_sockfd, &data, 1);
         if (data == 's') {
-            fprintf(stdout, "Receive the request of snapshot from InputLogger\n");
+            fprintf(stdout, "FTMB-Master: Receive the "
+                    "request of snapshot from InputLogger\n");
             data = 't';
             write(il_sockfd, &data, 1);
-            fprintf(stdout, "Taken snapshot and send the reply to InputLogger\n");
+            fprintf(stdout, "TFTMB-Master: aken snapshot "
+                    "and send the reply to InputLogger\n");
         }
     }
 
