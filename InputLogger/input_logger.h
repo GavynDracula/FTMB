@@ -37,10 +37,10 @@
 #define OPTIMIZE_TRIGGER  1
 #define TO_MS 5000
 
-struct pcap_loop_arg {
+typedef struct pcap_loop_arg {
     pcap_t* dst_nic;
     pcap_dumper_t* pd;
-};
+} pacp_loop_arg;
 
 void get_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* packet);
 void print_packet(const struct pcap_pkthdr* pkthdr, const u_char* packet);

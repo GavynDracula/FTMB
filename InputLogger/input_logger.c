@@ -32,7 +32,7 @@ int main() {
 
     // Connect to Master
     if (connect(il_sockfd, (struct sockaddr*)&il_addr, sizeof(il_addr)) == -1) {
-        fprintf(stderr, "Error: connect(): can't connect to master\n");
+        fprintf(stderr, "Error: FTMB-InputLogger: connect(): can't connect to master\n");
         exit(1);
     }
 
@@ -41,21 +41,22 @@ int main() {
 
     // Open src_nic for capturing packet and open dst_nic for sending packet
     if (src_nic == NULL || dst_nic == NULL) {
-        fprintf(stderr, "Error: pcap_open_live(): %s\n", err_buf);
+        fprintf(stderr, "Error: FTMB-InputLogger: pcap_open_live(): %s\n", err_buf);
         exit(2);
     }
     else
         fprintf(stdout,
-                "Open src_nic %s and dst_nic %s successfully!\n",
+                "FTMB-InputLogger: Open src_nic %s and dst_nic %s successfully!\n",
                 SRC_NIC, DST_NIC);
 
     /*
      *if (!pcap_compile(src_nic, &filter, "dst host 192.168.1.2", OPTIMIZE_TRIGGER, 0)) {
-     *    fprintf(stderr, "Error: pcap_compile(): complie filter error\n");
+     *    fprintf(stderr, "Error: FTMB-InputLogger: pcap_compile():"
+     *                    " complie filter error\n");
      *    exit(3);
      *}
      *if (!pcap_setfilter(src_nic, &filter)) {
-     *    fprintf(stderr, "Error: pcap_compile(): set filter error\n");
+     *    fprintf(stderr, "Error: FTMB-InputLogger: pcap_compile(): set filter error\n");
      *    exit(4);
      *}
      */
@@ -64,27 +65,30 @@ int main() {
 
     while (!replay_trigger) {
         if((pd = pcap_dump_open(src_nic, TMP_PACKETS)) == NULL) {
-            fprintf(stderr, "Error: pcap_dump_open(): open file %s failed\n", IN_PACKETS);
+            fprintf(stderr, "Error: FTMB-InputLogger: "
+                    "pcap_dump_open(): open file %s failed\n", IN_PACKETS);
             exit(5);
         }
         else
-            fprintf(stdout, "Connect to stable storage(pcap now) successfully!\n");
+        fprintf(stdout, "FTMB-InputLogger: Connect to "
+                "stable storage(pcap now) successfully!\n");
         arg.pd = pd;
         
         received_num = pcap_dispatch(src_nic, PACKET_NUM, get_packet, (u_char*)&arg);
         pcap_dump_close(pd);
 
-        fprintf(stdout, "Receive %d packets\n", received_num);
+        fprintf(stdout, "FTMB-InputLogger: Receive %d packets\n", received_num);
         
         if (received_num > 0) {
             data = 's'; // Tell Master to take a 's'napshot
             connect_status = write(il_sockfd, &data, 1);
-            fprintf(stdout, "Send the request of snapshot to Master\n");
+            fprintf(stdout, "FTMB-InputLogger: Send the request of snapshot to Master\n");
             connect_status = read(il_sockfd, &data, 1);
             
             // Follow if-case is just incomplete, not tested
             if (connect_status <= 0) {
-                fprintf(stderr, "Master is disconnected, now start to recovery\n");
+                fprintf(stderr, "Error: FTMB-InputLogger: "
+                        "Master is disconnected, now start to recovery\n");
                 // Create a socket
                 il_sockfd = socket(AF_INET, SOCK_STREAM, 0);
                 il_addr.sin_family = AF_INET;
@@ -93,7 +97,8 @@ int main() {
                 
                 // Connect to Backup
                 if (connect(il_sockfd,(struct sockaddr*)&il_addr,sizeof(il_addr)) == -1) {
-                    fprintf(stderr, "Error: connect(): can't connect to Backup\n");
+                    fprintf(stderr, "Error: FTMB-InputLogger: "
+                            "connect(): can't connect to Backup\n");
                     exit(1);
                 }
                 // Start to replay 
@@ -102,27 +107,29 @@ int main() {
                 
                 data = 's'; // Tell Backup to take a 's'napshot
                 connect_status = write(il_sockfd, &data, 1);
-                fprintf(stdout, "Send the request of snapshot to Backup\n");
+                fprintf(stdout, "FTMB-InputLogger: Send the "
+                        "request of snapshot to Backup\n");
                 connect_status = read(il_sockfd, &data, 1);
-                fprintf(stdout, "Receive the reply from Backup\n");
+                fprintf(stdout, "FTMB-InputLogger: Receive the reply from Backup\n");
                 if (data == 't') {
                     // Backup's snapshot is 't'aken
-                    fprintf(stdout, "Backup's snapshot is taken\n");
+                    fprintf(stdout, "FTMB-InputLogger: Backup's snapshot is taken\n");
                     rename(TMP_PACKETS, IN_PACKETS);
                 }
                 dst_nic = pcap_open_live(BAC_NIC, PACKET_MAX_SIZE, 
                                          PROMISC_TRIGGER, TO_MS, err_buf);
                 if (dst_nic == NULL) {
-                    fprintf(stderr, "Error: pcap_open_live(): %s\n", err_buf);
+                    fprintf(stderr, "Error: FTMB-InputLogger: "
+                            "pcap_open_live(): %s\n", err_buf);
                     exit(2);
                 }
                 continue;
             }
             
-            fprintf(stdout, "Receive the reply from Master\n");
+            fprintf(stdout, "FTMB-InputLogger: Receive the reply from Master\n");
             if (data == 't') {
                 // Master's snapshot is 't'aken
-                fprintf(stdout, "Master's snapshot is taken\n");
+                fprintf(stdout, "FTMB-InputLogger: Master's snapshot is taken\n");
                 rename(TMP_PACKETS, IN_PACKETS);
             }
         }
@@ -143,7 +150,8 @@ void get_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* pac
 
     // Send the packet to Master
     if (pcap_sendpacket(dst_nic, packet, pkthdr->caplen) != 0) {
-        fprintf(stderr, "pcap_sendpacket(): send packet error\n");
+        fprintf(stderr, "Error: FTMB-InputLogger: "
+                "pcap_sendpacket(): send packet error\n");
     }
 
     /*print_packet(pkthdr, packet);*/
@@ -169,7 +177,8 @@ void replay_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* 
 
     // Send the packet to Backup
     if (pcap_sendpacket(bac_nic, packet, pkthdr->caplen) != 0) {
-        fprintf(stderr, "pcap_sendpacket(): send packet error\n");
+        fprintf(stderr, "Error: FTMB-InputLogger: "
+                "pcap_sendpacket(): send packet error\n");
     }
 }
 
@@ -184,18 +193,18 @@ void replay(char* packets) {
     in_packets = pcap_open_offline(packets, err_buf);
 
     if (bac_nic == NULL)  {
-        fprintf(stderr, "Error: pcap_open_live(): %s\n", err_buf);
+        fprintf(stderr, "Error: FTMB-InputLogger: pcap_open_live(): %s\n", err_buf);
         exit(6);
     }
     else
-        fprintf(stdout, "Open bac_nic %s successfully!\n", BAC_NIC);
+        fprintf(stdout, "FTMB-InputLogger: Open bac_nic %s successfully!\n", BAC_NIC);
 
     if (in_packets == NULL) {
-        fprintf(stderr, "Error: pcap_open_offline(): %s\n", err_buf);
+        fprintf(stderr, "Error: FTMB-InputLogger: pcap_open_offline(): %s\n", err_buf);
         exit(7);
     }
     else
-        fprintf(stdout, "Open in_packets %s successfully!\n", packets);
+        fprintf(stdout, "FTMB-InputLogger: Open in_packets %s successfully!\n", packets);
 
     // Replay packets to Backup
     pcap_loop(in_packets, -1, replay_packet, (u_char*)bac_nic);
