@@ -12,14 +12,13 @@ void* packet_counter(void* argv) {
     pcap_t *src_nic;
     pcap_t *dst_nic;
     pcap_loop_arg loop_arg;
-
     struct bpf_program filter;
     char filter_str[36];
 
     packet_counter_arg* pc_arg = (packet_counter_arg*)argv;
 
     pthread_mutex_lock(pc_arg->mutex);
-    pc_arg->counter = 0;
+    *(pc_arg->counter) = 0;
     pthread_mutex_unlock(pc_arg->mutex);
 
     src_nic = pcap_open_live(SRC_NIC, PACKET_MAX_SIZE, PROMISC_TRIGGER, TO_MS, err_buf);
@@ -36,7 +35,8 @@ void* packet_counter(void* argv) {
                 SRC_NIC, DST_NIC);
 
     // Filter packets(don't counter packets used for communication among FTMB)
-    sprintf(filter_str, "not tcp port %d", PRIVATE_PORT);
+    sprintf(filter_str, "icmp");
+    /*sprintf(filter_str, "not tcp port %d", PRIVATE_PORT);*/
     if (pcap_compile(src_nic, &filter, filter_str, OPTIMIZE_TRIGGER, 0) != 0) {
         fprintf(stderr, "Error: Packet Counter: pcap_compile(): complie filter error\n");
         exit(3);
@@ -61,12 +61,16 @@ void get_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* pac
     pcap_t* dst_nic = ((pcap_loop_arg*)arg)->dst_nic;
 
     pthread_mutex_lock(pc_arg->mutex);
-    pc_arg->counter += 1;
+    *(pc_arg->counter) += 1;
     pthread_mutex_unlock(pc_arg->mutex);
+    
+    fprintf(stdout, "Debug: packet counter receive 1 packet\n");
 
     // Send the packet to Master
-    if (pcap_sendpacket(dst_nic, packet, pkthdr->caplen) != 0) {
-        fprintf(stderr, "Error: Packet Counter: pcap_sendpacket(): send packet error\n");
-    }
+    /*
+     *if (pcap_sendpacket(dst_nic, packet, pkthdr->caplen) != 0) {
+     *    fprintf(stderr, "Error: Packet Counter: pcap_sendpacket(): send packet error\n");
+     *}
+     */
 
 }

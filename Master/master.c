@@ -16,12 +16,14 @@ int main(void) {
 
     char data;
 
-    // Start Network Function Threand(Here a simple packet counter)
+    cpu_set_t set;
+
     pthread_t nf_thread;
     packet_counter_arg pc_arg;
     pthread_mutex_t mutex;
     int counter;
 
+    // Start Network Function Threand(Here a simple packet counter)
     pc_arg.mutex = &mutex;
     pc_arg.counter = &counter;
     pthread_mutex_init(pc_arg.mutex, NULL);
@@ -30,7 +32,23 @@ int main(void) {
                 "network function(packet counter) thread!");
     }
 
-    // Creat a socket
+    // Multi thread cpu affinity
+    fprintf(stdout, "Debug: main thread: %d, nf_thread: %d\n", 
+            (unsigned int)pthread_self(), (unsigned int)nf_thread);
+    CPU_ZERO(&set);
+    CPU_SET(6, &set);
+    if(pthread_setaffinity_np(pthread_self(), sizeof(set), &set) != 0) {
+        fprintf(stderr, "Error: FTMB-Master: can't set master's cpu-affinity\n");
+        exit(1);
+    }
+    CPU_ZERO(&set);
+    CPU_SET(7, &set);
+    if(pthread_setaffinity_np(nf_thread, sizeof(set), &set) != 0) {
+        fprintf(stderr, "Error: FTMB-Master: can't set packet counter's cpu-affinity\n");
+        exit(1);
+    }
+
+    // Create a socket
     master_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     master_addr.sin_family = AF_INET;
     master_addr.sin_addr.s_addr = inet_addr(MASTER_IP);
@@ -51,11 +69,13 @@ int main(void) {
             fprintf(stdout, "FTMB-Master: Receive the "
                     "request of snapshot from InputLogger\n");
             pthread_mutex_lock(pc_arg.mutex);
-            fprintf(stdout, "FTMB-Master: the snapshot state(counter) is %d\n", *(pc_arg.counter));
+            fprintf(stdout, 
+                    "FTMB-Master: the snapshot state(counter) is %d\n", 
+                    *(pc_arg.counter));
             pthread_mutex_unlock(pc_arg.mutex);
             data = 't';
             write(il_sockfd, &data, 1);
-            fprintf(stdout, "TFTMB-Master: aken snapshot "
+            fprintf(stdout, "FTMB-Master: Take snapshot "
                     "and send the reply to InputLogger\n");
         }
     }

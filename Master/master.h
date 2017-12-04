@@ -8,12 +8,15 @@
 #ifndef _MASTER_H
 #define _MASTER_H
 
+#define _GNU_SOURCE
+
 #include<stdio.h>
 #include<sys/socket.h>
 #include<sys/types.h>
 #include<netinet/in.h>
 #include<arpa/inet.h>
 #include<unistd.h>
+#include<sched.h>
 
 #include "packet_counter.h"
 
