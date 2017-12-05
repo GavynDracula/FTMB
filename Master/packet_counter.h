@@ -11,6 +11,8 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<pcap.h>
+#include<netinet/in.h>
+#include<netinet/if_ether.h>
 #include<pthread.h>
 
 #define SRC_NIC "eno3"
@@ -24,9 +26,12 @@
 #define OPTIMIZE_TRIGGER  1
 #define TO_MS 5000
 
+#define ETHER_HEADER_LENGTH 14
+
 typedef struct packet_counter_arg {
     int* counter;
     pthread_mutex_t* mutex;
+    int* nf_process_flag;
 } packet_counter_arg;
 
 typedef struct pcap_loop_arg {
