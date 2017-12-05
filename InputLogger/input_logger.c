@@ -20,7 +20,7 @@ int main() {
     int il_sockfd;
     struct sockaddr_in il_addr;
 
-    // struct bpf_program filter;
+    struct bpf_program filter;
     pcap_t* src_nic;
     pcap_t* dst_nic;
     pcap_dumper_t* pd;
@@ -52,15 +52,15 @@ int main() {
                 "FTMB-InputLogger: Open src_nic %s and dst_nic %s successfully!\n",
                 SRC_NIC, DST_NIC);
 
-    // if (!pcap_compile(src_nic, &filter, "dst host 192.168.1.2", OPTIMIZE_TRIGGER, 0)) {
-       // fprintf(stderr, "Error: FTMB-InputLogger: pcap_compile():"
-                       // " complie filter error\n");
-       // exit(3);
-    // }
-    // if (!pcap_setfilter(src_nic, &filter)) {
-       // fprintf(stderr, "Error: FTMB-InputLogger: pcap_compile(): set filter error\n");
-       // exit(4);
-    // }
+    if (pcap_compile(src_nic, &filter, "dst host 192.168.1.2", OPTIMIZE_TRIGGER, 0)) {
+       fprintf(stderr, "Error: FTMB-InputLogger: pcap_compile():"
+                       " complie filter error\n");
+       exit(3);
+    }
+    if (pcap_setfilter(src_nic, &filter)) {
+       fprintf(stderr, "Error: FTMB-InputLogger: pcap_compile(): set filter error\n");
+       exit(4);
+    }
     
     received_total = 0;
     arg.dst_nic = dst_nic;
