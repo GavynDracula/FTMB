@@ -22,19 +22,20 @@ int main(void) {
     packet_counter_arg pc_arg;
     pthread_mutex_t mutex;
     int counter;
+    int nf_process_flag;
 
-    // Start Network Function Threand(Here a simple packet counter)
+    /* Start Network Function Threand(Here a simple packet counter) */
     pc_arg.mutex = &mutex;
     pc_arg.counter = &counter;
+    pc_arg.nf_process_flag = &nf_process_flag;
+    nf_process_flag = 1;
     pthread_mutex_init(pc_arg.mutex, NULL);
     if (pthread_create(&nf_thread, NULL, &packet_counter, (void*)&pc_arg) != 0) {
         fprintf(stderr, "Error: FTMB-Master: can't create "
                 "network function(packet counter) thread!");
     }
 
-    // Multi thread cpu affinity
-    fprintf(stdout, "Debug: main thread: %u, nf_thread: %u\n", 
-            (unsigned int)pthread_self(), (unsigned int)nf_thread);
+    /* Multi thread cpu affinity */
     CPU_ZERO(&set);
     CPU_SET(4, &set);
     if(pthread_setaffinity_np(pthread_self(), sizeof(set), &set) != 0) {
@@ -48,26 +49,28 @@ int main(void) {
         exit(1);
     }
 
-    // Create a socket
+    /* Create a socket */
     master_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     master_addr.sin_family = AF_INET;
     master_addr.sin_addr.s_addr = inet_addr(MASTER_IP);
     master_addr.sin_port = htons(MASTER_IL_PORT);
 
-    // Bind
+    /* Bind */
     bind(master_sockfd, (struct sockaddr *)&master_addr, sizeof(master_addr));
-    // Listen
+    /* Listen */
     listen(master_sockfd, 1);
     fprintf(stdout, "FTMB-Master: Master is waiting for InputLogger to connect...\n");
-    // Accept a connection
+    /* Accept a connection */
     il_sockfd = accept(master_sockfd, (struct sockaddr *)&il_addr, &len);
-    fprintf(stdout, "FTMB-Master: Receive connection request from InputLogger\n");
+    fprintf(stdout, "FTMB-Master: Connection with InputLogger is established\n");
 
     while (1) {
         read(il_sockfd, &data, 1);
         if (data == 's') {
             fprintf(stdout, "FTMB-Master: Receive the "
                     "request of snapshot from InputLogger\n");
+            while(*(pc_arg.nf_process_flag));
+            *(pc_arg.nf_process_flag) = 1;
             pthread_mutex_lock(pc_arg.mutex);
             fprintf(stdout, 
                     "FTMB-Master: the snapshot state(counter) is %d\n", 
