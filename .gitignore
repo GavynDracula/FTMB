@@ -1,3 +1,4 @@
 InputLogger/input_logger
 Master/master
+StableStorage/state.snapshot
 StableStorage/*.pcap
