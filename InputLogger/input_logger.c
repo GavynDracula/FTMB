@@ -15,6 +15,7 @@ int main() {
     int received_total;
     int connect_status;
     char data;
+    int state;
 
     int il_sockfd;
     struct sockaddr_in il_addr;
@@ -24,6 +25,7 @@ int main() {
     pcap_t* dst_nic;
     pcap_dumper_t* pd;
     struct pcap_loop_arg arg;
+    FILE* state_snapshot;
 
     /* Create a socket */
     il_sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -77,7 +79,7 @@ int main() {
         received_num = pcap_dispatch(src_nic, PACKET_NUM, get_packet, (u_char*)&arg);
         pcap_dump_close(pd);
 
-        fprintf(stdout, "Debug: InputLogger: Receive %d packets\n", received_num);
+        fprintf(stdout, "Debug: Receive %d packets\n", received_num);
         received_total += received_num;
         fprintf(stdout, "Debug: Receive %d packets totally\n", received_total);
         
@@ -86,7 +88,7 @@ int main() {
             data = 's'; 
             connect_status = write(il_sockfd, &data, 1);
             fprintf(stdout, "FTMB-InputLogger: Send the request of snapshot to Master\n");
-            connect_status = read(il_sockfd, &data, 1);
+            connect_status = read(il_sockfd, &state, 4);
             
             /* Follow if-case is just incomplete, not tested */
             if (connect_status <= 0) {
@@ -130,12 +132,15 @@ int main() {
                 continue;
             }
             
-            fprintf(stdout, "FTMB-InputLogger: Receive the reply from Master\n");
-            if (data == 't') {
-                /* Master's snapshot is 't'aken */
-                fprintf(stdout, "FTMB-InputLogger: Master's snapshot is taken\n");
-                rename(TMP_PACKETS, IN_PACKETS);
-            }
+            /* Master's snapshot is 't'aken */
+            fprintf(stdout, 
+                    "FTMB-InputLogger: Master's snapshot %d is taken\n", 
+                    state);
+            state_snapshot = fopen(STATE_SNAPSHOT, "w");
+            /* fwrite(&state, sizeof(int), 1, state_snapshot); */
+            fprintf(state_snapshot, "%d", state);
+            fclose(state_snapshot);
+            rename(TMP_PACKETS, IN_PACKETS);
         }
     }
 
