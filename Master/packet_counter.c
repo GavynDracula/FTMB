@@ -95,6 +95,7 @@ void get_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* pac
             }
         }
         else if (protocol == IPPROTO_ICMP) {
+            /* Just log icmp packet(ping) now */
             pthread_mutex_lock(pc_arg->mutex);
             *(pc_arg->counter) += 1;
             pthread_mutex_unlock(pc_arg->mutex);

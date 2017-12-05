@@ -73,13 +73,10 @@ int main(void) {
             *(pc_arg.nf_process_flag) = 1;
             pthread_mutex_lock(pc_arg.mutex);
             fprintf(stdout, 
-                    "FTMB-Master: the snapshot state(counter) is %d\n", 
+                    "FTMB-Master: Send the snapshot state(counter) %d to InputLogger\n", 
                     *(pc_arg.counter));
+            write(il_sockfd, pc_arg.counter, 4);
             pthread_mutex_unlock(pc_arg.mutex);
-            data = 't';
-            write(il_sockfd, &data, 1);
-            fprintf(stdout, "FTMB-Master: Take snapshot "
-                    "and send the reply to InputLogger\n");
         }
     }
 
