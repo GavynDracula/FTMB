@@ -66,7 +66,7 @@ int main() {
     arg.dst_nic = dst_nic;
 
     while (!replay_trigger) {
-        if((pd = pcap_dump_open(src_nic, TMP_PACKETS)) == NULL) {
+        if((pd = pcap_dump_open(src_nic, IN_PACKETS)) == NULL) {
             fprintf(stderr, "Error: FTMB-InputLogger: "
                     "pcap_dump_open(): open file %s failed\n", IN_PACKETS);
             exit(5);
@@ -106,22 +106,20 @@ int main() {
                             "connect(): can't connect to Backup\n");
                     exit(1);
                 }
+                
+                /* Send state to Snapshot state to Backup */
+                state_snapshot = fopen(STATE_SNAPSHOT, "r");
+                // fwrite(&state, sizeof(int), 1, state_snapshot);
+                fscanf(state_snapshot, "%d", &state);
+                fclose(state_snapshot);
+                fprintf(stdout, 
+                        "FTMB-InputLogger: Send snapshot state %d to Backup\n", 
+                        state);
+                connect_status = write(il_sockfd, &state, 4);
+                
                 /* Start to replay  */
                 replay(IN_PACKETS);
-                replay(TMP_PACKETS);
                 
-                /* Tell Backup to take a 's'napshot */
-                data = 's'; 
-                connect_status = write(il_sockfd, &data, 1);
-                fprintf(stdout, "FTMB-InputLogger: Send the "
-                        "request of snapshot to Backup\n");
-                connect_status = read(il_sockfd, &data, 1);
-                fprintf(stdout, "FTMB-InputLogger: Receive the reply from Backup\n");
-                if (data == 't') {
-                    /* Backup's snapshot is 't'aken */
-                    fprintf(stdout, "FTMB-InputLogger: Backup's snapshot is taken\n");
-                    rename(TMP_PACKETS, IN_PACKETS);
-                }
                 dst_nic = pcap_open_live(BAC_NIC, PACKET_MAX_SIZE, 
                                          PROMISC_TRIGGER, TO_MS, err_buf);
                 if (dst_nic == NULL) {
@@ -129,6 +127,7 @@ int main() {
                             "pcap_open_live(): %s\n", err_buf);
                     exit(2);
                 }
+                arg.dst_nic = dst_nic;
                 continue;
             }
             
@@ -140,7 +139,6 @@ int main() {
             /* fwrite(&state, sizeof(int), 1, state_snapshot); */
             fprintf(state_snapshot, "%d", state);
             fclose(state_snapshot);
-            rename(TMP_PACKETS, IN_PACKETS);
         }
     }
 

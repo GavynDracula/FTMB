@@ -30,7 +30,6 @@
 #define SRC_NIC "eno4"
 #define DST_NIC "eno3"
 #define IN_PACKETS "/home/dracula/FTMB/StableStorage/in_packets.pcap"
-#define TMP_PACKETS "/home/dracula/FTMB/StableStorage/tmp.pcap"
 #define STATE_SNAPSHOT "/home/dracula/FTMB/StableStorage/state.snapshot"
 #define PACKET_MAX_SIZE 65535
 #define PACKET_NUM -1
