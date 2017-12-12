@@ -20,7 +20,7 @@
 #define PACKET_NUM -1
 #define PROMISC_TRIGGER 0
 #define OPTIMIZE_TRIGGER  1
-#define TO_MS 5000
+#define TO_MS -1
 
 void get_packet(u_char* arg, const struct pcap_pkthdr* pkthdr, const u_char* packet);
 
