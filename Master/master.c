@@ -37,13 +37,13 @@ int main(void) {
 
     /* Multi thread cpu affinity */
     CPU_ZERO(&set);
-    CPU_SET(4, &set);
+    CPU_SET(6, &set);
     if(pthread_setaffinity_np(pthread_self(), sizeof(set), &set) != 0) {
         fprintf(stderr, "Error: FTMB-Master: can't set master's cpu-affinity\n");
         exit(1);
     }
     CPU_ZERO(&set);
-    CPU_SET(20, &set);
+    CPU_SET(8, &set);
     if(pthread_setaffinity_np(nf_thread, sizeof(set), &set) != 0) {
         fprintf(stderr, "Error: FTMB-Master: can't set packet counter's cpu-affinity\n");
         exit(1);
