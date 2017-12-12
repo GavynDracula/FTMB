@@ -24,7 +24,7 @@
 #define PACKET_NUM -1
 #define PROMISC_TRIGGER 0
 #define OPTIMIZE_TRIGGER  1
-#define TO_MS 5000
+#define TO_MS -1
 
 #define ETHER_HEADER_LENGTH 14
 
