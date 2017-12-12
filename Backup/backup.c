@@ -66,7 +66,10 @@ int main(void) {
 
     /* Accept snapshot state */
     pthread_mutex_lock(pc_arg.mutex);
-    write(il_sockfd, pc_arg.counter, 4);
+    read(il_sockfd, pc_arg.counter, 4);
+    fprintf(stdout, 
+            "FTMB-Backup: Receive the snapshot state(counter) %d from InputLogger\n", 
+            *(pc_arg.counter));
     pthread_mutex_unlock(pc_arg.mutex);
 
     while (1) {
