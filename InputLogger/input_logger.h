@@ -36,7 +36,7 @@
 #define PACKET_NUM -1
 #define PROMISC_TRIGGER 0
 #define OPTIMIZE_TRIGGER  1
-#define TO_MS 5000
+#define TO_MS 200
 
 typedef struct pcap_loop_arg {
     pcap_t* dst_nic;

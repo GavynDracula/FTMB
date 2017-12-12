@@ -12,7 +12,7 @@ int replay_trigger = 0;
 int main() {
     char err_buf[PCAP_ERRBUF_SIZE];
     int received_num;
-    int received_total;
+    // int received_total;
     int connect_status;
     char data;
     int state;
@@ -62,7 +62,7 @@ int main() {
        exit(4);
     }
     
-    received_total = 0;
+    // received_total = 0;
     arg.dst_nic = dst_nic;
 
     while (!replay_trigger) {
@@ -79,9 +79,9 @@ int main() {
         received_num = pcap_dispatch(src_nic, PACKET_NUM, get_packet, (u_char*)&arg);
         pcap_dump_close(pd);
 
-        fprintf(stdout, "Debug: Receive %d packets\n", received_num);
-        received_total += received_num;
-        fprintf(stdout, "Debug: Receive %d packets totally\n", received_total);
+        // fprintf(stdout, "Debug: Receive %d packets\n", received_num);
+        // received_total += received_num;
+        // fprintf(stdout, "Debug: Receive %d packets totally\n", received_total);
         
         if (received_num > 0) {
             /* Tell Master to take a 's'napshot */
