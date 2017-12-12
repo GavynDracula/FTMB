@@ -71,9 +71,9 @@ int main() {
                     "pcap_dump_open(): open file %s failed\n", IN_PACKETS);
             exit(5);
         }
-        else
-        fprintf(stdout, "FTMB-InputLogger: Connect to "
-                "stable storage(pcap now) successfully!\n");
+        // else
+            // fprintf(stdout, "FTMB-InputLogger: Connect to "
+                    // "stable storage(pcap now) successfully!\n");
         arg.pd = pd;
         
         received_num = pcap_dispatch(src_nic, PACKET_NUM, get_packet, (u_char*)&arg);

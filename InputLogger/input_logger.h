@@ -21,7 +21,7 @@
 #define MASTER_IP "192.168.1.2"
 #define MASTER_IL_PORT 8081
 
-#define BACKUP_IP "192.168.1.3"
+#define BACKUP_IP "192.168.2.2"
 #define BACKUP_IL_PORT 8082
 
 #define BAC_NIC "eno3"
