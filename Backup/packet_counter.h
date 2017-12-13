@@ -15,10 +15,10 @@
 #include<netinet/if_ether.h>
 #include<pthread.h>
 
-#define SRC_NIC "eno3"
-#define DST_NIC "eno3"
+#define SRC_NIC "em3"
+#define DST_NIC "em3"
 
-#define PRIVATE_PORT 8081
+#define PRIVATE_PORT 8082
 
 #define PACKET_MAX_SIZE 65535
 #define PACKET_NUM -1
